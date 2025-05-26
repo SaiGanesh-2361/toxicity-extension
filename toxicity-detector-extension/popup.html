@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Toxicity Detector</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 16px;
+      width: 240px;
+      background: #fff;
+      color: #333;
+    }
+    h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    #status {
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    input[type="checkbox"] {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+    }
+    small {
+      display: block;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h2>Toxicity Detector</h2>
+  <div id="status">Status: <span id="status-text">Loading...</span></div>
+  <label>
+    <input type="checkbox" id="toggle-detection" />
+    Enable Toxicity Checking
+  </label>
+  <small>Toggle detection on this page.</small>
+
+  <script>
+    const toggle = document.getElementById('toggle-detection');
+    const statusText = document.getElementById('status-text');
+
+    function updateUI(enabled) {
+      toggle.checked = enabled;
+      statusText.textContent = enabled ? 'ON' : 'OFF';
+      statusText.style.color = enabled ? '#4caf50' : '#f44336';
+    }
+
+    chrome.storage.local.get(['toxicityEnabled'], (result) => {
+      updateUI(result.toxicityEnabled ?? true);
+    });
+
+    toggle.addEventListener('change', () => {
+      const enabled = toggle.checked;
+      chrome.storage.local.set({ toxicityEnabled: enabled });
+      updateUI(enabled);
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'setEnabled', enabled });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
